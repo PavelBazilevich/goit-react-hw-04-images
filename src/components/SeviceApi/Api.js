@@ -2,8 +2,11 @@ import axios from 'axios';
 const apiKey = '29834380-00058cdf7f3ce3b5b4cca9ee7';
 axios.defaults.baseURL = 'https://pixabay.com/api/';
 
+export const controller = new AbortController();
+
 export const fetchImages = async (imageQuery, page = 1) => {
   const response = await axios.get('', {
+    signal: controller.signal,
     params: {
       q: imageQuery,
       page: page,

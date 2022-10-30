@@ -13,94 +13,67 @@ export function App() {
   const [error, setError] = useState('');
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadMoreShown, setIsLoadMoreShown] = useState(false);
-
-  // state = {
-  //   page: null,
-  //   error: '',
-  //   images: [],
-  //   isLoading: false,
-  //   isLoadMoreShown: false,
-  // };
+  // const [isLoadMoreShown, setIsLoadMoreShown] = useState(false);
 
   const hendleFormSubmit = imageQuery => {
     setImageQuery(imageQuery);
     setImages([]);
     setPage(1);
     setIsLoading(true);
-    // this.setState({ imageQuery, images: [], page: 1, isLoading: true });
+    setError('');
   };
 
   useEffect(() => {
-    console.log('componentDidMount');
-    if (!isLoading) {
-      fetchImages();
-    }
+    const fetchImg = async () => {
+      setIsLoading(true);
+      try {
+        function randomInteger(min, max) {
+          // получить случайное число от (min-0.5) до (max+0.5)
+          let rand = min - 0.5 + Math.random() * (max - min + 1);
+          return Math.round(rand);
+        }
+        const fetchedImages = await fetchImages(randomInteger(1, 50));
+        setImages(fetchedImages.hits);
+      } catch (e) {
+        setError('Sorry, failed to download. Please try again.');
+        throw e;
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchImg();
   }, []);
 
-  // componentDidMount() {
-  //   if (!this.state.isLoading) {
-  //     this.fetchImages();
-  //   }
-  // }
-
   useEffect(() => {
-    console.log('componentDidUpdate');
-
-    if (isLoading) {
-      fetchImages();
+    if (imageQuery === '') {
+      return;
     }
-  }, [fetchImages, isLoading]);
 
-  // componentDidUpdate() {
-  //   if (this.state.isLoading) {
-  //     this.fetchImages();
-  //   }
-  // }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  async function fetchImages() {
-    const searchQuery = imageQuery;
-    const searchPage = page;
-    try {
-      const fetchedImages = await fetchImages(searchQuery, searchPage);
-      // const imagess = [...images, ...fetchedImages.hits];
-      // setImages(prevImages => prevImages, ...fetchedImages.hits);
-      setImages([fetchedImages.hits]);
-
-      // setImages([...images, ...fetchedImages.hits]);
-      setIsLoadMoreShown(images.length < fetchedImages.totalHits);
-      setError(
-        images.length === 0
-          ? 'Sorry, there are no images you were looking for.'
-          : ''
-      );
-      // this.setState({
-      //   images: images,
-      //   isLoadMoreShown: images.length < fetchedImages.totalHits,
-      //   error:
-      //     images.length === 0
-      //       ? 'Sorry, there are no images you were looking for.'
-      //       : '',
-      // });
-    } catch {
-      setError('Sorry, failed to download. Please try again.');
-      // this.setState({
-      //   error: 'Sorry, failed to download. Please try again.',
-      // });
-    } finally {
-      setIsLoading(false);
-      // this.setState({ isLoading: false });
+    const fetchImg = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedImages = await fetchImages(imageQuery, page);
+        setImages(prevImages => [...prevImages, ...fetchedImages.hits]);
+        // потрібно подумати ще над функціоналом показу кнопки (LOAD MORE)
+        // setIsLoadMoreShown(images.length > fetchedImages.totalHits);
+        if (fetchedImages.totalHits === 0) {
+          setError('Sorry, there are no images you were looking for.');
+        }
+      } catch (e) {
+        setError('Sorry, failed to download. Please try again.');
+        throw e;
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (imageQuery) {
+      fetchImg();
     }
-  }
+  }, [imageQuery, page]);
 
   const hendelLoadMor = () => {
     setPage(prevPage => prevPage + 1);
     setIsLoading(true);
-    // this.setState(prevState => ({
-    //   page: prevState.page + 1,
-    //   isLoading: true,
-    // }));
   };
 
   return (
@@ -113,7 +86,9 @@ export function App() {
       )}
       {error && <h1>{error}</h1>}
 
-      {!(images.length < 12) && <Button onClick={hendelLoadMor} />}
+      {!(images.length < 12) && page !== null && (
+        <Button onClick={hendelLoadMor} />
+      )}
     </div>
   );
 }
